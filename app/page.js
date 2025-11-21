@@ -316,6 +316,179 @@ export default function App() {
     setCategory('A1')
   }
 
+  const handleBulkUpload = async () => {
+    setUploadStatus('Uploading...')
+    
+    try {
+      // Parse the bulk text (format: word | meaning | example | category)
+      const lines = bulkText.trim().split('\n')
+      const vocabularyItems = []
+      const errors = []
+      
+      lines.forEach((line, index) => {
+        const parts = line.split('|').map(p => p.trim())
+        
+        if (parts.length < 3) {
+          errors.push(`Line ${index + 1}: Invalid format (need at least: word | meaning | category)`)
+          return
+        }
+        
+        const [word, meaning, exampleOrCategory, maybeCategory] = parts
+        let example = ''
+        let cat = 'A1'
+        
+        // Check if we have 3 or 4 parts
+        if (parts.length === 3) {
+          // Format: word | meaning | category
+          cat = exampleOrCategory
+        } else {
+          // Format: word | meaning | example | category
+          example = exampleOrCategory
+          cat = maybeCategory || 'A1'
+        }
+        
+        // Validate category
+        if (!['A1', 'A2', 'B1'].includes(cat)) {
+          errors.push(`Line ${index + 1}: Invalid category "${cat}" (must be A1, A2, or B1)`)
+          return
+        }
+        
+        vocabularyItems.push({
+          word,
+          meaning,
+          example_sentence: example,
+          category: cat
+        })
+      })
+      
+      if (errors.length > 0) {
+        setUploadStatus(`Errors found:\n${errors.join('\n')}`)
+        return
+      }
+      
+      if (vocabularyItems.length === 0) {
+        setUploadStatus('No valid vocabulary items found')
+        return
+      }
+      
+      // Upload all items
+      let successCount = 0
+      for (const item of vocabularyItems) {
+        const res = await fetch('/api/vocabulary', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(item)
+        })
+        
+        if (res.ok) {
+          successCount++
+        }
+      }
+      
+      setUploadStatus(`✅ Successfully uploaded ${successCount} of ${vocabularyItems.length} words!`)
+      setBulkText('')
+      loadAdminVocabulary()
+      
+      // Clear status after 3 seconds
+      setTimeout(() => setUploadStatus(''), 3000)
+      
+    } catch (error) {
+      console.error('Bulk upload error:', error)
+      setUploadStatus('❌ Upload failed. Please try again.')
+    }
+  }
+
+  const handleCSVUpload = async (event) => {
+    const file = event.target.files[0]
+    if (!file) return
+    
+    setUploadStatus('Reading file...')
+    
+    const reader = new FileReader()
+    reader.onload = async (e) => {
+      try {
+        const text = e.target.result
+        const lines = text.split('\n').filter(line => line.trim())
+        
+        // Skip header if present
+        const startIndex = lines[0].toLowerCase().includes('word') ? 1 : 0
+        const vocabularyItems = []
+        const errors = []
+        
+        for (let i = startIndex; i < lines.length; i++) {
+          const line = lines[i]
+          const parts = line.split(',').map(p => p.trim().replace(/^"|"$/g, ''))
+          
+          if (parts.length < 3) {
+            errors.push(`Line ${i + 1}: Invalid format`)
+            continue
+          }
+          
+          const [word, meaning, categoryOrExample, maybeCategory] = parts
+          let example = ''
+          let cat = 'A1'
+          
+          if (parts.length === 3) {
+            cat = categoryOrExample
+          } else {
+            example = categoryOrExample
+            cat = maybeCategory || 'A1'
+          }
+          
+          if (!['A1', 'A2', 'B1'].includes(cat)) {
+            errors.push(`Line ${i + 1}: Invalid category "${cat}"`)
+            continue
+          }
+          
+          vocabularyItems.push({
+            word,
+            meaning,
+            example_sentence: example,
+            category: cat
+          })
+        }
+        
+        if (errors.length > 0 && vocabularyItems.length === 0) {
+          setUploadStatus(`Errors found:\n${errors.join('\n')}`)
+          return
+        }
+        
+        // Upload all items
+        setUploadStatus(`Uploading ${vocabularyItems.length} words...`)
+        let successCount = 0
+        
+        for (const item of vocabularyItems) {
+          const res = await fetch('/api/vocabulary', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(item)
+          })
+          
+          if (res.ok) successCount++
+        }
+        
+        setUploadStatus(`✅ Successfully uploaded ${successCount} of ${vocabularyItems.length} words!`)
+        loadAdminVocabulary()
+        
+        // Clear status after 3 seconds
+        setTimeout(() => setUploadStatus(''), 3000)
+        
+      } catch (error) {
+        console.error('CSV upload error:', error)
+        setUploadStatus('❌ Upload failed. Please check CSV format.')
+      }
+    }
+    
+    reader.readAsText(file)
+    event.target.value = '' // Reset file input
+  }
+
   // Prevent hydration errors by waiting for client-side mount
   if (!mounted) {
     return null
