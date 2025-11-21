@@ -438,7 +438,7 @@ export default function App() {
 
         <div className="container mx-auto px-4 py-8">
           <Tabs defaultValue="learn" className="w-full">
-            <TabsList className="grid w-full max-w-md mx-auto grid-cols-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-md border border-blue-100">
+            <TabsList className={`grid w-full max-w-md mx-auto ${user.isAdmin ? 'grid-cols-3' : 'grid-cols-2'} bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-md border border-blue-100`}>
               <TabsTrigger value="learn" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white">Learn</TabsTrigger>
               <TabsTrigger value="progress" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white">Progress</TabsTrigger>
               {user.isAdmin && <TabsTrigger value="admin" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white">Admin</TabsTrigger>}
