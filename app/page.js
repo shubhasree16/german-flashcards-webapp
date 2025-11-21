@@ -811,12 +811,98 @@ export default function App() {
             {/* Admin Tab */}
             {user.isAdmin && (
               <TabsContent value="admin" className="mt-8">
-                <div className="max-w-4xl mx-auto">
+                <div className="max-w-4xl mx-auto space-y-6">
+                  {/* Bulk Upload Card */}
+                  <Card className="shadow-xl border-blue-100">
+                    <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900 dark:to-indigo-900">
+                      <CardTitle className="text-2xl bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                        Bulk Upload Vocabulary
+                      </CardTitle>
+                      <CardDescription className="mt-2">
+                        Upload multiple words at once using CSV file or paste text
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4 mt-6">
+                      {/* CSV Upload */}
+                      <div className="space-y-2">
+                        <Label htmlFor="csv-upload" className="text-base font-semibold">Upload CSV File</Label>
+                        <div className="flex items-center gap-4">
+                          <Input
+                            id="csv-upload"
+                            type="file"
+                            accept=".csv"
+                            onChange={handleCSVUpload}
+                            className="border-blue-200 focus:border-blue-500"
+                          />
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              const csvTemplate = `word,meaning,example_sentence,category
+Guten Tag,Good day,Guten Tag! Wie geht es Ihnen?,A1
+Auf Wiedersehen,Goodbye,Auf Wiedersehen! Bis morgen!,A1
+Danke schön,Thank you very much,Danke schön für Ihre Hilfe!,A1`
+                              const blob = new Blob([csvTemplate], { type: 'text/csv' })
+                              const url = URL.createObjectURL(blob)
+                              const a = document.createElement('a')
+                              a.href = url
+                              a.download = 'vocabulary_template.csv'
+                              a.click()
+                            }}
+                            className="border-blue-200 hover:bg-blue-50 whitespace-nowrap"
+                          >
+                            Download Template
+                          </Button>
+                        </div>
+                        <p className="text-xs text-gray-500">CSV format: word, meaning, example_sentence, category</p>
+                      </div>
+
+                      <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                          <span className="w-full border-t border-gray-300" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                          <span className="bg-white dark:bg-gray-800 px-2 text-gray-500">Or paste text</span>
+                        </div>
+                      </div>
+
+                      {/* Bulk Text Input */}
+                      <div className="space-y-2">
+                        <Label htmlFor="bulk-text" className="text-base font-semibold">Paste Multiple Words</Label>
+                        <textarea
+                          id="bulk-text"
+                          value={bulkText}
+                          onChange={(e) => setBulkText(e.target.value)}
+                          placeholder={`Format (one per line):\nGuten Tag | Good day | Guten Tag! Wie geht es Ihnen? | A1\nAuf Wiedersehen | Goodbye | Auf Wiedersehen! Bis morgen! | A1\n\nOr shorter format:\nDanke | Thank you | A1\nBitte | Please | A1`}
+                          rows="6"
+                          className="w-full p-3 border border-blue-200 rounded-md focus:border-blue-500 font-mono text-sm"
+                        />
+                        <p className="text-xs text-gray-500">
+                          Format: <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded">word | meaning | example | category</code> or <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded">word | meaning | category</code>
+                        </p>
+                      </div>
+
+                      <Button 
+                        onClick={handleBulkUpload}
+                        disabled={!bulkText.trim()}
+                        className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Bulk Upload Words
+                      </Button>
+
+                      {uploadStatus && (
+                        <div className={`p-3 rounded-md ${uploadStatus.includes('✅') ? 'bg-green-50 text-green-700 border border-green-200' : uploadStatus.includes('❌') ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-blue-50 text-blue-700 border border-blue-200'}`}>
+                          <pre className="text-sm whitespace-pre-wrap font-sans">{uploadStatus}</pre>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
                   {/* Add/Edit Vocabulary Form */}
-                  <Card className="mb-6 shadow-xl border-blue-100">
+                  <Card className="shadow-xl border-blue-100">
                     <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900">
                       <CardTitle className="text-2xl bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                        {editingVocab ? 'Edit Vocabulary' : 'Add New Vocabulary'}
+                        {editingVocab ? 'Edit Vocabulary' : 'Add Single Word'}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4 mt-6">
