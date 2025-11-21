@@ -622,8 +622,8 @@ export default function App() {
             {/* Learning Tab */}
             <TabsContent value="learn" className="mt-8">
               {/* Category Filter */}
-              <div className="flex justify-center gap-2 mb-8">
-                {['all', 'A1', 'A2', 'B1'].map((cat) => (
+              <div className="flex flex-wrap justify-center gap-2 mb-8 max-w-4xl mx-auto">
+                {['all', 'Greetings', 'Basic Phrases', 'Helping Verbs', 'Common Verbs', 'Food & Drink', 'Weather', 'Family', 'Hobbies', 'Pronouns', 'Questions', 'Numbers', 'Shopping'].map((cat) => (
                   <Button
                     key={cat}
                     variant={selectedCategory === cat ? 'default' : 'outline'}
@@ -631,7 +631,7 @@ export default function App() {
                     size="sm"
                     className={selectedCategory === cat ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg' : 'border-blue-200 hover:bg-blue-50'}
                   >
-                    {cat === 'all' ? 'All Levels' : cat}
+                    {cat === 'all' ? 'All Categories' : cat}
                   </Button>
                 ))}
               </div>
