@@ -1,104 +1,607 @@
-import { MongoClient } from 'mongodb'
-import { v4 as uuidv4 } from 'uuid'
 import { NextResponse } from 'next/server'
+import { supabaseAdmin } from '../../../lib/supabase.js'
+import { generateToken, getUserFromRequest } from '../../../lib/auth.js'
+import bcrypt from 'bcryptjs'
 
-// MongoDB connection
-let client
-let db
-
-async function connectToMongo() {
-  if (!client) {
-    client = new MongoClient(process.env.MONGO_URL)
-    await client.connect()
-    db = client.db(process.env.DB_NAME)
-  }
-  return db
+// Helper function to get admin client
+function getAdminClient() {
+  return supabaseAdmin()
 }
 
-// Helper function to handle CORS
-function handleCORS(response) {
-  response.headers.set('Access-Control-Allow-Origin', process.env.CORS_ORIGINS || '*')
-  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-  response.headers.set('Access-Control-Allow-Credentials', 'true')
-  return response
-}
+// ============= AUTH ROUTES =============
 
-// OPTIONS handler for CORS
-export async function OPTIONS() {
-  return handleCORS(new NextResponse(null, { status: 200 }))
-}
-
-// Route handler function
-async function handleRoute(request, { params }) {
-  const { path = [] } = params
-  const route = `/${path.join('/')}`
-  const method = request.method
-
+async function handleSignup(request) {
   try {
-    const db = await connectToMongo()
-
-    // Root endpoint - GET /api/root (since /api/ is not accessible with catch-all)
-    if (route === '/root' && method === 'GET') {
-      return handleCORS(NextResponse.json({ message: "Hello World" }))
-    }
-    // Root endpoint - GET /api/root (since /api/ is not accessible with catch-all)
-    if (route === '/' && method === 'GET') {
-      return handleCORS(NextResponse.json({ message: "Hello World" }))
+    const { email, password, name } = await request.json()
+    
+    if (!email || !password || !name) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    // Status endpoints - POST /api/status
-    if (route === '/status' && method === 'POST') {
-      const body = await request.json()
-      
-      if (!body.client_name) {
-        return handleCORS(NextResponse.json(
-          { error: "client_name is required" }, 
-          { status: 400 }
-        ))
+    const admin = getAdminClient()
+    
+    // Check if user exists
+    const { data: existingUser } = await admin
+      .from('users')
+      .select('id')
+      .eq('email', email)
+      .single()
+    
+    if (existingUser) {
+      return NextResponse.json({ error: 'User already exists' }, { status: 400 })
+    }
+    
+    // Hash password
+    const passwordHash = await bcrypt.hash(password, 10)
+    
+    // Create user
+    const { data: user, error } = await admin
+      .from('users')
+      .insert([{
+        email,
+        password_hash: passwordHash,
+        name,
+        is_admin: false
+      }])
+      .select()
+      .single()
+    
+    if (error) {
+      console.error('Signup error:', error)
+      return NextResponse.json({ error: 'Failed to create user' }, { status: 500 })
+    }
+    
+    // Create initial progress record
+    await admin.from('user_progress').insert([{
+      user_id: user.id,
+      words_learned: 0,
+      daily_streak: 0,
+      current_streak_days: 0,
+      total_xp: 0,
+      last_active_date: new Date().toISOString().split('T')[0]
+    }])
+    
+    const token = generateToken(user.id, user.email, user.is_admin)
+    
+    return NextResponse.json({
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        isAdmin: user.is_admin
       }
-
-      const statusObj = {
-        id: uuidv4(),
-        client_name: body.client_name,
-        timestamp: new Date()
-      }
-
-      await db.collection('status_checks').insertOne(statusObj)
-      return handleCORS(NextResponse.json(statusObj))
-    }
-
-    // Status endpoints - GET /api/status
-    if (route === '/status' && method === 'GET') {
-      const statusChecks = await db.collection('status_checks')
-        .find({})
-        .limit(1000)
-        .toArray()
-
-      // Remove MongoDB's _id field from response
-      const cleanedStatusChecks = statusChecks.map(({ _id, ...rest }) => rest)
-      
-      return handleCORS(NextResponse.json(cleanedStatusChecks))
-    }
-
-    // Route not found
-    return handleCORS(NextResponse.json(
-      { error: `Route ${route} not found` }, 
-      { status: 404 }
-    ))
-
+    })
   } catch (error) {
-    console.error('API Error:', error)
-    return handleCORS(NextResponse.json(
-      { error: "Internal server error" }, 
-      { status: 500 }
-    ))
+    console.error('Signup error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
-// Export all HTTP methods
-export const GET = handleRoute
-export const POST = handleRoute
-export const PUT = handleRoute
-export const DELETE = handleRoute
-export const PATCH = handleRoute
+async function handleLogin(request) {
+  try {
+    const { email, password } = await request.json()
+    
+    if (!email || !password) {
+      return NextResponse.json({ error: 'Missing email or password' }, { status: 400 })
+    }
+
+    const admin = getAdminClient()
+    
+    // Get user
+    const { data: user, error } = await admin
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .single()
+    
+    if (error || !user) {
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
+    }
+    
+    // Verify password
+    const validPassword = await bcrypt.compare(password, user.password_hash)
+    
+    if (!validPassword) {
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
+    }
+    
+    const token = generateToken(user.id, user.email, user.is_admin)
+    
+    return NextResponse.json({
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        isAdmin: user.is_admin
+      }
+    })
+  } catch (error) {
+    console.error('Login error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+async function handleGetUser(request) {
+  try {
+    const userInfo = getUserFromRequest(request)
+    
+    if (!userInfo) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const admin = getAdminClient()
+    
+    const { data: user, error } = await admin
+      .from('users')
+      .select('id, email, name, is_admin')
+      .eq('id', userInfo.userId)
+      .single()
+    
+    if (error || !user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+    
+    return NextResponse.json({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      isAdmin: user.is_admin
+    })
+  } catch (error) {
+    console.error('Get user error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+// ============= VOCABULARY ROUTES =============
+
+async function handleGetVocabulary(request) {
+  try {
+    const url = new URL(request.url)
+    const category = url.searchParams.get('category')
+
+    const admin = getAdminClient()
+    
+    let query = admin.from('vocabulary').select('*')
+    
+    if (category) {
+      query = query.eq('category', category)
+    }
+    
+    const { data, error } = await query.order('created_at', { ascending: false })
+    
+    if (error) {
+      console.error('Get vocabulary error:', error)
+      return NextResponse.json({ error: 'Failed to fetch vocabulary' }, { status: 500 })
+    }
+    
+    return NextResponse.json(data || [])
+  } catch (error) {
+    console.error('Get vocabulary error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+async function handleCreateVocabulary(request) {
+  try {
+    const userInfo = getUserFromRequest(request)
+    
+    if (!userInfo || !userInfo.isAdmin) {
+      return NextResponse.json({ error: 'Unauthorized - Admin only' }, { status: 403 })
+    }
+    
+    const { word, meaning, example_sentence, category } = await request.json()
+    
+    if (!word || !meaning || !category) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    }
+
+    const admin = getAdminClient()
+    
+    const { data, error } = await admin
+      .from('vocabulary')
+      .insert([{
+        word,
+        meaning,
+        example_sentence: example_sentence || '',
+        category
+      }])
+      .select()
+      .single()
+    
+    if (error) {
+      console.error('Create vocabulary error:', error)
+      return NextResponse.json({ error: 'Failed to create vocabulary' }, { status: 500 })
+    }
+    
+    return NextResponse.json(data)
+  } catch (error) {
+    console.error('Create vocabulary error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+async function handleUpdateVocabulary(request) {
+  try {
+    const userInfo = getUserFromRequest(request)
+    
+    if (!userInfo || !userInfo.isAdmin) {
+      return NextResponse.json({ error: 'Unauthorized - Admin only' }, { status: 403 })
+    }
+    
+    const { id, word, meaning, example_sentence, category } = await request.json()
+    
+    if (!id) {
+      return NextResponse.json({ error: 'Missing vocabulary ID' }, { status: 400 })
+    }
+
+    const admin = getAdminClient()
+    
+    const updateData = {}
+    if (word) updateData.word = word
+    if (meaning) updateData.meaning = meaning
+    if (example_sentence !== undefined) updateData.example_sentence = example_sentence
+    if (category) updateData.category = category
+    
+    const { data, error } = await admin
+      .from('vocabulary')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single()
+    
+    if (error) {
+      console.error('Update vocabulary error:', error)
+      return NextResponse.json({ error: 'Failed to update vocabulary' }, { status: 500 })
+    }
+    
+    return NextResponse.json(data)
+  } catch (error) {
+    console.error('Update vocabulary error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+async function handleDeleteVocabulary(request) {
+  try {
+    const userInfo = getUserFromRequest(request)
+    
+    if (!userInfo || !userInfo.isAdmin) {
+      return NextResponse.json({ error: 'Unauthorized - Admin only' }, { status: 403 })
+    }
+    
+    const { id } = await request.json()
+    
+    if (!id) {
+      return NextResponse.json({ error: 'Missing vocabulary ID' }, { status: 400 })
+    }
+
+    const admin = getAdminClient()
+    
+    const { error } = await admin
+      .from('vocabulary')
+      .delete()
+      .eq('id', id)
+    
+    if (error) {
+      console.error('Delete vocabulary error:', error)
+      return NextResponse.json({ error: 'Failed to delete vocabulary' }, { status: 500 })
+    }
+    
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Delete vocabulary error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+// ============= FLASHCARD ROUTES =============
+
+async function handleGetFlashcards(request) {
+  try {
+    const userInfo = getUserFromRequest(request)
+    
+    if (!userInfo) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    
+    const url = new URL(request.url)
+    const category = url.searchParams.get('category')
+
+    const admin = getAdminClient()
+    
+    // Get all vocabulary
+    let vocabQuery = admin.from('vocabulary').select('*')
+    
+    if (category) {
+      vocabQuery = vocabQuery.eq('category', category)
+    }
+    
+    const { data: vocabulary, error: vocabError } = await vocabQuery
+    
+    if (vocabError) {
+      console.error('Get flashcards error:', vocabError)
+      return NextResponse.json({ error: 'Failed to fetch flashcards' }, { status: 500 })
+    }
+    
+    // Get user progress for these vocabulary items
+    const { data: progress } = await admin
+      .from('user_vocabulary_progress')
+      .select('*')
+      .eq('user_id', userInfo.userId)
+    
+    // Combine data
+    const flashcards = vocabulary.map(vocab => {
+      const userProgress = progress?.find(p => p.vocabulary_id === vocab.id)
+      return {
+        ...vocab,
+        userStatus: userProgress?.status || 'new',
+        timesReviewed: userProgress?.times_reviewed || 0,
+        lastReviewed: userProgress?.last_reviewed
+      }
+    })
+    
+    return NextResponse.json(flashcards)
+  } catch (error) {
+    console.error('Get flashcards error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+async function handleUpdateFlashcardProgress(request) {
+  try {
+    const userInfo = getUserFromRequest(request)
+    
+    if (!userInfo) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    
+    const { vocabularyId, status } = await request.json()
+    
+    if (!vocabularyId || !status) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    }
+
+    const admin = getAdminClient()
+    
+    // Check if progress record exists
+    const { data: existing } = await admin
+      .from('user_vocabulary_progress')
+      .select('*')
+      .eq('user_id', userInfo.userId)
+      .eq('vocabulary_id', vocabularyId)
+      .single()
+    
+    const now = new Date().toISOString()
+    
+    if (existing) {
+      // Update existing
+      await admin
+        .from('user_vocabulary_progress')
+        .update({
+          status,
+          last_reviewed: now,
+          times_reviewed: (existing.times_reviewed || 0) + 1
+        })
+        .eq('id', existing.id)
+    } else {
+      // Create new
+      await admin
+        .from('user_vocabulary_progress')
+        .insert([{
+          user_id: userInfo.userId,
+          vocabulary_id: vocabularyId,
+          status,
+          last_reviewed: now,
+          times_reviewed: 1
+        }])
+    }
+    
+    // Update user progress (words learned, XP)
+    if (status === 'known') {
+      const { data: userProgress } = await admin
+        .from('user_progress')
+        .select('*')
+        .eq('user_id', userInfo.userId)
+        .single()
+      
+      if (userProgress) {
+        const today = new Date().toISOString().split('T')[0]
+        const lastActiveDate = userProgress.last_active_date
+        
+        let newStreakDays = userProgress.current_streak_days || 0
+        
+        // Check if this is a new day
+        if (lastActiveDate !== today) {
+          const yesterday = new Date()
+          yesterday.setDate(yesterday.getDate() - 1)
+          const yesterdayStr = yesterday.toISOString().split('T')[0]
+          
+          if (lastActiveDate === yesterdayStr) {
+            newStreakDays += 1
+          } else {
+            newStreakDays = 1
+          }
+        }
+        
+        await admin
+          .from('user_progress')
+          .update({
+            words_learned: (userProgress.words_learned || 0) + 1,
+            total_xp: (userProgress.total_xp || 0) + 10,
+            current_streak_days: newStreakDays,
+            last_active_date: today
+          })
+          .eq('user_id', userInfo.userId)
+        
+        // Check and award badges
+        await checkAndAwardBadges(userInfo.userId, admin)
+      }
+    }
+    
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Update flashcard progress error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+// ============= PROGRESS ROUTES =============
+
+async function handleGetProgress(request) {
+  try {
+    const userInfo = getUserFromRequest(request)
+    
+    if (!userInfo) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const admin = getAdminClient()
+    
+    const { data: progress, error } = await admin
+      .from('user_progress')
+      .select('*')
+      .eq('user_id', userInfo.userId)
+      .single()
+    
+    if (error && error.code !== 'PGRST116') {
+      console.error('Get progress error:', error)
+      return NextResponse.json({ error: 'Failed to fetch progress' }, { status: 500 })
+    }
+    
+    // Get badges
+    const { data: userBadges } = await admin
+      .from('user_badges')
+      .select(`
+        *,
+        badges (*)
+      `)
+      .eq('user_id', userInfo.userId)
+    
+    return NextResponse.json({
+      progress: progress || {
+        words_learned: 0,
+        daily_streak: 0,
+        current_streak_days: 0,
+        total_xp: 0
+      },
+      badges: userBadges || []
+    })
+  } catch (error) {
+    console.error('Get progress error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+// ============= BADGE HELPER =============
+
+async function checkAndAwardBadges(userId, admin) {
+  try {
+    // Get user progress
+    const { data: progress } = await admin
+      .from('user_progress')
+      .select('*')
+      .eq('user_id', userId)
+      .single()
+    
+    if (!progress) return
+    
+    // Get all badges
+    const { data: allBadges } = await admin
+      .from('badges')
+      .select('*')
+    
+    // Get already earned badges
+    const { data: earnedBadges } = await admin
+      .from('user_badges')
+      .select('badge_id')
+      .eq('user_id', userId)
+    
+    const earnedBadgeIds = new Set(earnedBadges?.map(b => b.badge_id) || [])
+    
+    // Check each badge
+    for (const badge of allBadges || []) {
+      if (earnedBadgeIds.has(badge.id)) continue
+      
+      let shouldAward = false
+      
+      if (badge.criteria_type === 'words_learned' && progress.words_learned >= badge.criteria_value) {
+        shouldAward = true
+      } else if (badge.criteria_type === 'streak_days' && progress.current_streak_days >= badge.criteria_value) {
+        shouldAward = true
+      }
+      
+      if (shouldAward) {
+        await admin
+          .from('user_badges')
+          .insert([{
+            user_id: userId,
+            badge_id: badge.id,
+            earned_at: new Date().toISOString()
+          }])
+      }
+    }
+  } catch (error) {
+    console.error('Badge check error:', error)
+  }
+}
+
+// ============= MAIN ROUTER =============
+
+export async function GET(request) {
+  const url = new URL(request.url)
+  const path = url.pathname.replace('/api/', '')
+  
+  if (path === 'auth/user') {
+    return handleGetUser(request)
+  } else if (path === 'vocabulary') {
+    return handleGetVocabulary(request)
+  } else if (path === 'flashcards') {
+    return handleGetFlashcards(request)
+  } else if (path === 'progress') {
+    return handleGetProgress(request)
+  }
+  
+  return NextResponse.json({ error: 'Not found' }, { status: 404 })
+}
+
+export async function POST(request) {
+  const url = new URL(request.url)
+  const path = url.pathname.replace('/api/', '')
+  
+  if (path === 'auth/signup') {
+    return handleSignup(request)
+  } else if (path === 'auth/login') {
+    return handleLogin(request)
+  } else if (path === 'vocabulary') {
+    return handleCreateVocabulary(request)
+  } else if (path === 'flashcards/progress') {
+    return handleUpdateFlashcardProgress(request)
+  }
+  
+  return NextResponse.json({ error: 'Not found' }, { status: 404 })
+}
+
+export async function PUT(request) {
+  const url = new URL(request.url)
+  const path = url.pathname.replace('/api/', '')
+  
+  if (path === 'vocabulary') {
+    return handleUpdateVocabulary(request)
+  }
+  
+  return NextResponse.json({ error: 'Not found' }, { status: 404 })
+}
+
+export async function DELETE(request) {
+  const url = new URL(request.url)
+  const path = url.pathname.replace('/api/', '')
+  
+  if (path === 'vocabulary') {
+    return handleDeleteVocabulary(request)
+  }
+  
+  return NextResponse.json({ error: 'Not found' }, { status: 404 })
+}
