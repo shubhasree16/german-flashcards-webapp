@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Moon, Sun, Volume2, Award, TrendingUp, Flame, BookOpen, LogOut, Plus, Edit, Trash2, Sparkles } from 'lucide-react'
 
 export default function App() {
+  const [mounted, setMounted] = useState(false)
   const [darkMode, setDarkMode] = useState(false)
   const [user, setUser] = useState(null)
   const [token, setToken] = useState(null)
@@ -34,15 +35,24 @@ export default function App() {
   const [exampleSentence, setExampleSentence] = useState('')
   const [category, setCategory] = useState('A1')
 
+  // Handle mounting to avoid hydration errors
   useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted) return
+    
     if (darkMode) {
       document.documentElement.classList.add('dark')
     } else {
       document.documentElement.classList.remove('dark')
     }
-  }, [darkMode])
+  }, [darkMode, mounted])
 
   useEffect(() => {
+    if (!mounted) return
+    
     const storedToken = localStorage.getItem('token')
     const storedUser = localStorage.getItem('user')
     
@@ -50,7 +60,7 @@ export default function App() {
       setToken(storedToken)
       setUser(JSON.parse(storedUser))
     }
-  }, [])
+  }, [mounted])
 
   useEffect(() => {
     if (token && user) {
