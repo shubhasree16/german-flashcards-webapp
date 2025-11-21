@@ -314,6 +314,11 @@ export default function App() {
     setCategory('A1')
   }
 
+  // Prevent hydration errors by waiting for client-side mount
+  if (!mounted) {
+    return null
+  }
+
   if (!user) {
     return (
       <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
