@@ -313,7 +313,7 @@ export default function App() {
     setWord('')
     setMeaning('')
     setExampleSentence('')
-    setCategory('A1')
+    setCategory('Greetings')
   }
 
   const handleBulkUpload = async () => {
