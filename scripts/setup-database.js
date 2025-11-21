@@ -1,21 +1,25 @@
 // Database setup script - Run this ONCE to create tables and seed initial data
 // This uses the service role key (backend only) to create tables
-require('dotenv').config()
 const { createClient } = require('@supabase/supabase-js')
 const fs = require('fs')
 const path = require('path')
 
-// Load env variables manually if needed
+// Load env variables manually
 const envPath = path.join(__dirname, '..', '.env')
 if (fs.existsSync(envPath)) {
   const envFile = fs.readFileSync(envPath, 'utf8')
   envFile.split('\n').forEach(line => {
-    const [key, ...valueParts] = line.split('=')
-    if (key && valueParts.length) {
-      const value = valueParts.join('=').trim()
-      if (!process.env[key]) {
-        process.env[key] = value
-      }
+    const trimmedLine = line.trim()
+    if (!trimmedLine || trimmedLine.startsWith('#')) return
+    
+    const equalIndex = trimmedLine.indexOf('=')
+    if (equalIndex === -1) return
+    
+    const key = trimmedLine.substring(0, equalIndex).trim()
+    const value = trimmedLine.substring(equalIndex + 1).trim()
+    
+    if (key && value && !process.env[key]) {
+      process.env[key] = value
     }
   })
 }
