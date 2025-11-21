@@ -442,7 +442,11 @@ export default function App() {
             cat = maybeCategory || 'A1'
           }
           
-          if (!['A1', 'A2', 'B1'].includes(cat)) {
+          const validCategories = ['Greetings', 'Basic Phrases', 'Numbers', 'Time & Date', 'Family', 
+                                  'Food & Drink', 'Hobbies', 'Weather', 'Travel', 'Shopping',
+                                  'Helping Verbs', 'Common Verbs', 'Adjectives', 'Questions',
+                                  'Pronouns', 'Colors', 'Body Parts', 'Animals', 'School', 'Work']
+          if (!validCategories.includes(cat)) {
             errors.push(`Line ${i + 1}: Invalid category "${cat}"`)
             continue
           }
