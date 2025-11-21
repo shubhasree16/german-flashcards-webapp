@@ -34,7 +34,29 @@ Danke schön,Thank you very much,Danke schön für Ihre Hilfe!,A1
 - `word`: German word or phrase
 - `meaning`: English translation
 - `example_sentence`: Example usage in German (optional, can be empty)
-- `category`: Difficulty level (`A1`, `A2`, or `B1`)
+- `category`: Thematic category (e.g., `Greetings`, `Basic Phrases`, `Food & Drink`, `Weather`, etc.)
+
+**Available Categories:**
+- Greetings
+- Basic Phrases
+- Helping Verbs
+- Common Verbs
+- Food & Drink
+- Weather
+- Family
+- Hobbies
+- Pronouns
+- Questions
+- Numbers
+- Shopping
+- Time & Date
+- Travel
+- Colors
+- Body Parts
+- Animals
+- School
+- Work
+- Adjectives
 
 ### Step 2: Download Template (Optional)
 - In the Admin tab, click **"Download Template"** button
