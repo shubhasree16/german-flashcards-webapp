@@ -348,8 +348,12 @@ export default function App() {
         }
         
         // Validate category
-        if (!['A1', 'A2', 'B1'].includes(cat)) {
-          errors.push(`Line ${index + 1}: Invalid category "${cat}" (must be A1, A2, or B1)`)
+        const validCategories = ['Greetings', 'Basic Phrases', 'Numbers', 'Time & Date', 'Family', 
+                                'Food & Drink', 'Hobbies', 'Weather', 'Travel', 'Shopping',
+                                'Helping Verbs', 'Common Verbs', 'Adjectives', 'Questions',
+                                'Pronouns', 'Colors', 'Body Parts', 'Animals', 'School', 'Work']
+        if (!validCategories.includes(cat)) {
+          errors.push(`Line ${index + 1}: Invalid category "${cat}" (must be one of the valid categories)`)
           return
         }
         
