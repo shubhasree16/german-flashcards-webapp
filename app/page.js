@@ -846,9 +846,14 @@ export default function App() {
                             variant="outline"
                             onClick={() => {
                               const csvTemplate = `word,meaning,example_sentence,category
-Guten Tag,Good day,Guten Tag! Wie geht es Ihnen?,A1
-Auf Wiedersehen,Goodbye,Auf Wiedersehen! Bis morgen!,A1
-Danke schön,Thank you very much,Danke schön für Ihre Hilfe!,A1`
+Hallo,Hello,Hallo wie geht es dir?,Greetings
+Guten Morgen,Good morning,Guten Morgen! Hast du gut geschlafen?,Greetings
+Tschüss,Goodbye,Tschüss bis morgen!,Greetings
+Danke,Thank you,Danke schön!,Basic Phrases
+Bitte,Please,Bitte sehr!,Basic Phrases
+Essen,Food,Das Essen schmeckt gut.,Food & Drink
+Trinken,To drink,Ich möchte Wasser trinken.,Food & Drink
+Wetter,Weather,Wie ist das Wetter heute?,Weather`
                               const blob = new Blob([csvTemplate], { type: 'text/csv' })
                               const url = URL.createObjectURL(blob)
                               const a = document.createElement('a')
