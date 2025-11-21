@@ -885,7 +885,7 @@ Wetter,Weather,Wie ist das Wetter heute?,Weather`
                           id="bulk-text"
                           value={bulkText}
                           onChange={(e) => setBulkText(e.target.value)}
-                          placeholder={`Format (one per line):\nGuten Tag | Good day | Guten Tag! Wie geht es Ihnen? | A1\nAuf Wiedersehen | Goodbye | Auf Wiedersehen! Bis morgen! | A1\n\nOr shorter format:\nDanke | Thank you | A1\nBitte | Please | A1`}
+                          placeholder={`Format (one per line):\nHallo | Hello | Hallo wie geht es dir? | Greetings\nGuten Morgen | Good morning | Guten Morgen! | Greetings\n\nOr shorter format:\nDanke | Thank you | Basic Phrases\nBitte | Please | Basic Phrases`}
                           rows="6"
                           className="w-full p-3 border border-blue-200 rounded-md focus:border-blue-500 font-mono text-sm"
                         />
