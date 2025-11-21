@@ -1,11 +1,11 @@
 word,meaning,example_sentence,category
-Guten Tag,Good day,Guten Tag! Wie geht es Ihnen?,A1
-Auf Wiedersehen,Goodbye,Auf Wiedersehen! Bis morgen!,A1
-Danke schön,Thank you very much,Danke schön für Ihre Hilfe!,A1
-Bitte schön,You are welcome,Bitte schön gern geschehen!,A1
-Wie geht es dir?,How are you?,Wie geht es dir heute?,A1
-Mir geht es gut,I am fine,Mir geht es gut danke!,A1
-Freut mich,Nice to meet you,Freut mich Sie kennenzulernen!,A1
-Bis bald,See you soon,Bis bald! Auf Wiedersehen!,A1
-Gerne,With pleasure,Gerne! Kein Problem!,A1
-Natürlich,Of course,Natürlich kann ich dir helfen!,A1
+Hallo,Hello,Hallo wie geht es dir?,Greetings
+Guten Morgen,Good morning,Guten Morgen! Hast du gut geschlafen?,Greetings
+Tschüss,Goodbye,Tschüss bis morgen!,Greetings
+Danke,Thank you,Danke schön für deine Hilfe!,Basic Phrases
+Bitte,Please/You are welcome,Bitte sehr! Gern geschehen.,Basic Phrases
+Ja,Yes,Ja das ist richtig.,Basic Phrases
+Nein,No,Nein das möchte ich nicht.,Basic Phrases
+Essen,Food/To eat,Das Essen schmeckt gut.,Food & Drink
+Trinken,To drink,Ich möchte Wasser trinken.,Food & Drink
+Wetter,Weather,Wie ist das Wetter heute?,Weather
