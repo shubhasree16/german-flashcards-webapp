@@ -183,17 +183,24 @@ export default function App() {
 
   const speakWord = (text) => {
     if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(text)
-      utterance.lang = 'de-DE'
+      // Cancel any ongoing speech
+      window.speechSynthesis.cancel()
       
-      const voices = window.speechSynthesis.getVoices()
-      const germanVoice = voices.find(voice => voice.lang.includes('de'))
-      
-      if (germanVoice) {
-        utterance.voice = germanVoice
-      }
-      
-      window.speechSynthesis.speak(utterance)
+      // Small delay to ensure cancellation completes
+      setTimeout(() => {
+        const utterance = new SpeechSynthesisUtterance(text)
+        utterance.lang = 'de-DE'
+        utterance.rate = 0.9 // Slightly slower for clarity
+        
+        const voices = window.speechSynthesis.getVoices()
+        const germanVoice = voices.find(voice => voice.lang.includes('de'))
+        
+        if (germanVoice) {
+          utterance.voice = germanVoice
+        }
+        
+        window.speechSynthesis.speak(utterance)
+      }, 100)
     }
   }
 
