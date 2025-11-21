@@ -946,9 +946,26 @@ Danke schön,Thank you very much,Danke schön für Ihre Hilfe!,A1`
                           onChange={(e) => setCategory(e.target.value)}
                           className="flex h-10 w-full rounded-md border border-blue-200 bg-background px-3 py-2 text-sm focus:border-blue-500"
                         >
-                          <option value="A1">A1 (Beginner)</option>
-                          <option value="A2">A2 (Elementary)</option>
-                          <option value="B1">B1 (Intermediate)</option>
+                          <option value="Greetings">Greetings</option>
+                          <option value="Basic Phrases">Basic Phrases</option>
+                          <option value="Helping Verbs">Helping Verbs</option>
+                          <option value="Common Verbs">Common Verbs</option>
+                          <option value="Food & Drink">Food & Drink</option>
+                          <option value="Weather">Weather</option>
+                          <option value="Family">Family</option>
+                          <option value="Hobbies">Hobbies</option>
+                          <option value="Pronouns">Pronouns</option>
+                          <option value="Questions">Questions</option>
+                          <option value="Numbers">Numbers</option>
+                          <option value="Shopping">Shopping</option>
+                          <option value="Time & Date">Time & Date</option>
+                          <option value="Travel">Travel</option>
+                          <option value="Colors">Colors</option>
+                          <option value="Body Parts">Body Parts</option>
+                          <option value="Animals">Animals</option>
+                          <option value="School">School</option>
+                          <option value="Work">Work</option>
+                          <option value="Adjectives">Adjectives</option>
                         </select>
                       </div>
                       <div className="flex gap-2">
