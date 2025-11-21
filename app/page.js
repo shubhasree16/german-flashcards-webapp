@@ -34,6 +34,8 @@ export default function App() {
   const [meaning, setMeaning] = useState('')
   const [exampleSentence, setExampleSentence] = useState('')
   const [category, setCategory] = useState('A1')
+  const [bulkText, setBulkText] = useState('')
+  const [uploadStatus, setUploadStatus] = useState('')
 
   // Handle mounting to avoid hydration errors
   useEffect(() => {
