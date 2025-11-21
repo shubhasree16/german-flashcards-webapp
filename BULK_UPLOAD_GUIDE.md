@@ -153,8 +153,8 @@ Schnee,Snow,Im Winter gibt es Schnee.,Weather
 ## ⚠️ Common Errors and Solutions
 
 ### Error: "Invalid category"
-**Problem:** Category must be exactly `A1`, `A2`, or `B1`
-**Solution:** Check spelling and capitalization
+**Problem:** Category must match one of the valid thematic categories
+**Solution:** Use one of these categories: `Greetings`, `Basic Phrases`, `Helping Verbs`, `Common Verbs`, `Food & Drink`, `Weather`, `Family`, `Hobbies`, `Pronouns`, `Questions`, `Numbers`, `Shopping`, `Time & Date`, `Travel`, `Colors`, `Body Parts`, `Animals`, `School`, `Work`, `Adjectives`
 
 ### Error: "Invalid format"
 **Problem:** Missing required fields
