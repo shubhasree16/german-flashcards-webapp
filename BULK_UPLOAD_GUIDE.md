@@ -118,35 +118,34 @@ Nein | No | A1
 
 ## 🎯 Quick Examples
 
-### Example 1: Basic Words (10 A1 Level Words)
+### Example 1: Greetings (10 Words)
 ```
-Hallo | Hello | A1
-Tschüss | Bye | A1
-Danke | Thank you | A1
-Bitte | Please | A1
-Ja | Yes | A1
-Nein | No | A1
-Guten Morgen | Good morning | A1
-Gute Nacht | Good night | A1
-Entschuldigung | Excuse me | A1
-Ich | I | A1
+Hallo | Hello | Greetings
+Tschüss | Bye | Greetings
+Guten Morgen | Good morning | Greetings
+Guten Tag | Good day | Greetings
+Guten Abend | Good evening | Greetings
+Gute Nacht | Good night | Greetings
+Bis bald | See you soon | Greetings
+Auf Wiedersehen | Goodbye | Greetings
 ```
 
-### Example 2: With Examples (A2 Level)
+### Example 2: With Examples (Food & Drink)
 ```
-Vielleicht | Maybe | Vielleicht komme ich morgen. | A2
-Wichtig | Important | Das ist sehr wichtig. | A2
-Verstehen | To understand | Ich verstehe das nicht. | A2
-Glauben | To believe | Ich glaube dir. | A2
+Essen | Food | Das Essen schmeckt gut. | Food & Drink
+Trinken | To drink | Ich möchte Wasser trinken. | Food & Drink
+Brot | Bread | Ich esse gerne Brot. | Food & Drink
+Wasser | Water | Ein Glas Wasser bitte. | Food & Drink
+Kaffee | Coffee | Ich trinke Kaffee. | Food & Drink
 ```
 
 ### Example 3: CSV Format
 ```csv
 word,meaning,example_sentence,category
-Trotzdem,Nevertheless,Es regnet trotzdem gehe ich raus.,B1
-Außerdem,Moreover,Außerdem möchte ich noch etwas sagen.,B1
-Allerdings,However,Das stimmt allerdings nicht.,B1
-Vermutlich,Presumably,Vermutlich kommt er später.,B1
+Wetter,Weather,Wie ist das Wetter heute?,Weather
+Sonne,Sun,Die Sonne scheint.,Weather
+Regen,Rain,Es gibt viel Regen.,Weather
+Schnee,Snow,Im Winter gibt es Schnee.,Weather
 ```
 
 ---
