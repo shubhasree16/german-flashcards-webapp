@@ -28,6 +28,11 @@ export default function App() {
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [authError, setAuthError] = useState('')
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [showResetPassword, setShowResetPassword] = useState(false)
+  const [resetToken, setResetToken] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [resetMessage, setResetMessage] = useState('')
   
   // Admin form states
   const [word, setWord] = useState('')
