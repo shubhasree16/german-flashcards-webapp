@@ -684,6 +684,10 @@ export async function POST(request) {
     return handleSignup(request)
   } else if (path === 'auth/login') {
     return handleLogin(request)
+  } else if (path === 'auth/forgot-password') {
+    return handleForgotPassword(request)
+  } else if (path === 'auth/reset-password') {
+    return handleResetPassword(request)
   } else if (path === 'vocabulary') {
     return handleCreateVocabulary(request)
   } else if (path === 'flashcards/progress') {
