@@ -10,6 +10,115 @@ function getAdminClient() {
 
 // ============= AUTH ROUTES =============
 
+async function handleForgotPassword(request) {
+  try {
+    const { email } = await request.json()
+    
+    if (!email) {
+      return NextResponse.json({ error: 'Email is required' }, { status: 400 })
+    }
+
+    const admin = getAdminClient()
+    
+    // Check if user exists
+    const { data: user, error: userError } = await admin
+      .from('users')
+      .select('id, email, name')
+      .eq('email', email)
+      .single()
+    
+    if (userError || !user) {
+      // Don't reveal if user exists or not for security
+      return NextResponse.json({ 
+        message: 'If an account exists with this email, you will receive a password reset link.' 
+      })
+    }
+    
+    // Generate reset token (6-digit code)
+    const resetToken = Math.floor(100000 + Math.random() * 900000).toString()
+    const resetTokenExpiry = new Date(Date.now() + 3600000).toISOString() // 1 hour from now
+    
+    // Store reset token in users table
+    await admin
+      .from('users')
+      .update({ 
+        reset_token: resetToken,
+        reset_token_expiry: resetTokenExpiry
+      })
+      .eq('id', user.id)
+    
+    // Send email using Supabase Functions or external service
+    // For now, we'll return the token (in production, send via email)
+    // TODO: Integrate with email service
+    
+    console.log(`Reset token for ${email}: ${resetToken}`) // Development only
+    
+    return NextResponse.json({ 
+      message: 'If an account exists with this email, you will receive a password reset link.',
+      // Remove this in production - only for development
+      resetToken: resetToken 
+    })
+  } catch (error) {
+    console.error('Forgot password error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+async function handleResetPassword(request) {
+  try {
+    const { email, resetToken, newPassword } = await request.json()
+    
+    if (!email || !resetToken || !newPassword) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    }
+
+    if (newPassword.length < 6) {
+      return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 })
+    }
+
+    const admin = getAdminClient()
+    
+    // Get user with reset token
+    const { data: user, error: userError } = await admin
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .eq('reset_token', resetToken)
+      .single()
+    
+    if (userError || !user) {
+      return NextResponse.json({ error: 'Invalid or expired reset token' }, { status: 400 })
+    }
+    
+    // Check if token is expired
+    if (new Date(user.reset_token_expiry) < new Date()) {
+      return NextResponse.json({ error: 'Reset token has expired' }, { status: 400 })
+    }
+    
+    // Hash new password
+    const passwordHash = await bcrypt.hash(newPassword, 10)
+    
+    // Update password and clear reset token
+    const { error: updateError } = await admin
+      .from('users')
+      .update({ 
+        password_hash: passwordHash,
+        reset_token: null,
+        reset_token_expiry: null
+      })
+      .eq('id', user.id)
+    
+    if (updateError) {
+      return NextResponse.json({ error: 'Failed to update password' }, { status: 500 })
+    }
+    
+    return NextResponse.json({ message: 'Password reset successfully' })
+  } catch (error) {
+    console.error('Reset password error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
 async function handleSignup(request) {
   try {
     const { email, password, name } = await request.json()
