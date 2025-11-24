@@ -602,30 +602,118 @@ export default function App() {
                   <TabsTrigger value="signup" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">Sign Up</TabsTrigger>
                 </TabsList>
                 <TabsContent value="login" className="space-y-4 mt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@example.com"
-                      className="border-blue-200 focus:border-blue-500"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="border-blue-200 focus:border-blue-500"
-                    />
-                  </div>
-                  {authError && <p className="text-red-500 text-sm">{authError}</p>}
-                  <Button onClick={handleAuth} className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold">Login</Button>
+                  {!showForgotPassword && !showResetPassword ? (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="email">Email</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="you@example.com"
+                          className="border-blue-200 focus:border-blue-500"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="password">Password</Label>
+                        <Input
+                          id="password"
+                          type="password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder="••••••••"
+                          className="border-blue-200 focus:border-blue-500"
+                        />
+                      </div>
+                      {authError && <p className="text-red-500 text-sm">{authError}</p>}
+                      {resetMessage && <p className="text-green-600 text-sm">{resetMessage}</p>}
+                      <Button onClick={handleAuth} className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold">Login</Button>
+                      <div className="text-center">
+                        <button
+                          type="button"
+                          onClick={() => setShowForgotPassword(true)}
+                          className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                        >
+                          Forgot Password?
+                        </button>
+                      </div>
+                    </>
+                  ) : showForgotPassword ? (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="email-forgot">Email</Label>
+                        <Input
+                          id="email-forgot"
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="you@example.com"
+                          className="border-blue-200 focus:border-blue-500"
+                        />
+                      </div>
+                      {authError && <p className="text-red-500 text-sm">{authError}</p>}
+                      {resetMessage && <p className="text-green-600 text-sm">{resetMessage}</p>}
+                      <Button onClick={handleForgotPassword} className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold">Send Reset Code</Button>
+                      <div className="text-center">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowForgotPassword(false)
+                            setAuthError('')
+                            setResetMessage('')
+                          }}
+                          className="text-sm text-gray-600 hover:text-gray-700"
+                        >
+                          Back to Login
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="reset-code">Reset Code</Label>
+                        <Input
+                          id="reset-code"
+                          type="text"
+                          value={resetToken}
+                          onChange={(e) => setResetToken(e.target.value)}
+                          placeholder="Enter 6-digit code"
+                          className="border-blue-200 focus:border-blue-500"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="new-password">New Password</Label>
+                        <Input
+                          id="new-password"
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="Enter new password"
+                          className="border-blue-200 focus:border-blue-500"
+                        />
+                      </div>
+                      {authError && <p className="text-red-500 text-sm">{authError}</p>}
+                      {resetMessage && <p className="text-green-600 text-sm">{resetMessage}</p>}
+                      <Button onClick={handleResetPassword} className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold">Reset Password</Button>
+                      <div className="text-center">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowResetPassword(false)
+                            setShowForgotPassword(false)
+                            setAuthError('')
+                            setResetMessage('')
+                            setResetToken('')
+                            setNewPassword('')
+                          }}
+                          className="text-sm text-gray-600 hover:text-gray-700"
+                        >
+                          Back to Login
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </TabsContent>
                 <TabsContent value="signup" className="space-y-4 mt-4">
                   <div className="space-y-2">
