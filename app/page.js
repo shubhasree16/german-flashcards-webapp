@@ -121,6 +121,80 @@ export default function App() {
     }
   }
 
+  const handleForgotPassword = async () => {
+    setResetMessage('')
+    setAuthError('')
+    
+    if (!email) {
+      setAuthError('Please enter your email address')
+      return
+    }
+    
+    try {
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      })
+      
+      const data = await res.json()
+      
+      if (data.resetToken) {
+        // Development mode - show token
+        setResetMessage(`Your reset code is: ${data.resetToken}`)
+        setShowResetPassword(true)
+        setShowForgotPassword(false)
+      } else {
+        setResetMessage(data.message || 'Check your email for reset instructions')
+      }
+    } catch (error) {
+      setAuthError('An error occurred. Please try again.')
+    }
+  }
+
+  const handleResetPassword = async () => {
+    setResetMessage('')
+    setAuthError('')
+    
+    if (!resetToken || !newPassword) {
+      setAuthError('Please enter both reset code and new password')
+      return
+    }
+    
+    if (newPassword.length < 6) {
+      setAuthError('Password must be at least 6 characters')
+      return
+    }
+    
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          email, 
+          resetToken, 
+          newPassword 
+        })
+      })
+      
+      const data = await res.json()
+      
+      if (!res.ok) {
+        setAuthError(data.error || 'Reset failed')
+        return
+      }
+      
+      setResetMessage('Password reset successfully! You can now login.')
+      setShowResetPassword(false)
+      setShowForgotPassword(false)
+      setResetToken('')
+      setNewPassword('')
+      setPassword('')
+    } catch (error) {
+      setAuthError('An error occurred. Please try again.')
+    }
+  }
+
   const handleLogout = () => {
     setToken(null)
     setUser(null)
